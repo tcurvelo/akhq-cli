@@ -1,74 +1,38 @@
 package cmd
 
 import (
-	"crypto/tls"
 	"fmt"
-	"net/http"
-	"os"
+	"io"
 	"strconv"
 
 	"github.com/spf13/cobra"
+	"github.com/tcurvelo/akhq-cli/internal/akhq"
 )
 
-type Config struct {
-	BaseURL  string
-	Cluster  string
-	User     string
-	Pass     string
-	Token    string
-	Insecure bool
-}
+// NewRootCmd builds the CLI; getenv is typically os.Getenv.
+func NewRootCmd(args []string, getenv func(string) string, stdout, stderr io.Writer) *cobra.Command {
+	client := &akhq.Client{} // configured in PersistentPreRunE, shared with subcommands
 
-var (
-	conf   Config
-	client http.Client
-	token  string
-)
-
-func getConfigFromEnv() Config {
-	insecure, _ := strconv.ParseBool(os.Getenv("AKHQ_INSECURE"))
-	return Config{
-		BaseURL:  os.Getenv("AKHQ_URL"),
-		Cluster:  os.Getenv("AKHQ_CLUSTER"),
-		User:     os.Getenv("AKHQ_USER"),
-		Pass:     os.Getenv("AKHQ_PASS"),
-		Token:    os.Getenv("AKHQ_TOKEN"),
-		Insecure: insecure,
-	}
-}
-
-func getClient(conf Config) http.Client {
-	transp := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: conf.Insecure},
-	}
-	return http.Client{
-		Transport: transp,
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
+	root := &cobra.Command{
+		Use:   "akhq-cli",
+		Short: "Query an AKHQ instance from the command line",
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			insecure, _ := strconv.ParseBool(getenv("AKHQ_INSECURE"))
+			*client = *akhq.New(getenv("AKHQ_URL"), getenv("AKHQ_CLUSTER"), insecure)
+			client.Token = getenv("AKHQ_TOKEN")
+			if client.Token == "" {
+				token, err := client.Login(getenv("AKHQ_USER"), getenv("AKHQ_PASS"))
+				if err != nil {
+					return fmt.Errorf("error authenticating: %v", err)
+				}
+				client.Token = token
+			}
+			return nil
 		},
 	}
-}
-
-var rootCmd = &cobra.Command{
-	Use:   "akhq-cli",
-	Short: "Query an AKHQ instance from the command line",
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		conf = getConfigFromEnv()
-		client = getClient(conf)
-		token = conf.Token
-		if token == "" {
-			var err error
-			token, err = Authenticate(conf, client)
-			if err != nil {
-				return fmt.Errorf("error authenticating: %v", err)
-			}
-		}
-		return nil
-	},
-}
-
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		os.Exit(1)
-	}
+	root.SetArgs(args)
+	root.SetOut(stdout)
+	root.SetErr(stderr)
+	root.AddCommand(newGroupsCmd(client), newSearchCmd(client))
+	return root
 }
