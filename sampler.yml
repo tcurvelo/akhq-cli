@@ -4,11 +4,11 @@ runcharts:
     rate-ms: 5000
     items:
       - label: offsets
-        sample: ./akhq-cli $TOPIC1
+        sample: ./akhq-cli groups $TOPIC1
   - title: $TOPIC2
     position: [[0, 21], [80, 20]]
     rate-ms: 5000
     items:
       - label: offsets
-        sample: ./akhq-cli $TOPIC2
+        sample: ./akhq-cli groups $TOPIC2
 

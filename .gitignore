@@ -1,0 +1,6 @@
+/akhq-cli
+/bin/
+/dist/
+*.exe
+*.test
+*.out
