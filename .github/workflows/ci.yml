@@ -16,5 +16,6 @@ jobs:
       - run: go vet ./...
       - uses: golangci/golangci-lint-action@v9
         with:
-          version: latest
+          version: v2.15.0
+          install-mode: goinstall # built with the go.mod toolchain, so it accepts go 1.27
       - run: go test ./...

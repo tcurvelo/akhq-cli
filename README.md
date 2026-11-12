@@ -4,9 +4,9 @@ A command-line client for [AKHQ](https://akhq.io).
 
 ## Use cases
 
-- **Watching offset lag**: poll a topic's consumer group lag at a finer interval than metrics scraping allows (see `sampler.yml`).
-- **Topic dumps**: fetch every message of a topic, e.g. a dead letter topic, for a report or a manual replay.
-- **Finding specific messages**: search a topic by key, value, header or timestamp.
+- **Watching offset lag**: poll a topic's offset lag per consumer group at a finer interval than metrics scraping allows (see `sampler.yml`).
+- **Topic dumps**: fetch every message of a topic, e.g. a dead letter topic, for a report or a manual replay (planned).
+- **Finding specific messages**: search a topic by key, value or header, optionally starting from a timestamp.
 
 ## Install
 
